@@ -7,12 +7,12 @@ export const SessionExpired = () => {
   useEffect(() => {
     const createTimeout1 = () => setTimeout(() => {
       setWarningModalOpen(true);
-    }, 4000)
+    }, 300000)
 
     const createTimeout2 = () => setTimeout(() => {
       // Implement a sign out function here
       window.location.href = '/'
-    }, 5000)
+    }, 300000)
 
     const listener = () => {
       if (!isWarningModalOpen) {
