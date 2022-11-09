@@ -16,10 +16,10 @@ function Login() {
         if (email.trim().length !== 0 && password.trim().length !== 0) {
             setError(null);
             setLoading(true);
-            axios.post('https://bbc2-103-141-51-42.in.ngrok.io/api/v1/login', { email: email, password: password })
+            axios.post('https://7052-103-141-51-42.in.ngrok.io/api/v1/login', { email: email, password: password })
             .then(response => {
                 setLoading(false);
-                setUserSession(response.data.refreshtoken, response.data);
+                setUserSession(response.data.token, response.data.refreshtoken);
                 navigate('/profile');
             })
                 .catch(error => {
