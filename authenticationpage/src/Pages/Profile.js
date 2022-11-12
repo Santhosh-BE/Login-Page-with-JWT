@@ -1,29 +1,75 @@
-import './Profile.css'
 import { useEffect, useState } from 'react';
 import axios from 'axios';
-import { getToken } from '../Components/Common';
 import { Row, Col } from 'react-bootstrap'
 import { useNavigate } from 'react-router-dom'
-import { removeUserSession } from '../Components/Common';
-// import { SessionExpired } from '../Components/SessionExpired';
-
-// import card_img from '../images/team2.jpg';
+import { removeUserSession, getRefreshToken, getToken } from '../Components/Common';
+import { SessionExpired } from '../Components/SessionExpired';
+// import jwt_decode from 'jwt-decode';
 
 
 function Profile() {
   const [value, setValue] = useState("");
-  const token = getToken();
-  useEffect(() => {
-    loadUserData();
-    // eslint-disable-next-line
-  }, []);
-  const params = JSON.stringify({
-    "student_admissions_id": 1013
-  });
+  let token = getToken();
+  let refreshtoken = getRefreshToken();
 
-  const loadUserData = async () => {
-    await axios
-      .post("https://7052-103-141-51-42.in.ngrok.io/api/v1/studentProfile", params,
+  const navigate = useNavigate();
+
+
+  const logoutbtn = () => {
+    removeUserSession()
+    navigate('/')
+  }
+
+
+  const params = {
+    "student_admissions_id": 1013,
+  };
+
+
+  const validateExpiry = () => {
+    let currentTime = new Date();
+    let oldTime = new Date(sessionStorage.getItem('date1'));
+
+    let timeDiff = Math.round((currentTime - oldTime) / (1000 * 60));
+    console.log("timeDiff", timeDiff, currentTime - oldTime)
+    console.log("oldtime", oldTime)
+    console.log("newtime", currentTime)
+    if (timeDiff >= 1) {
+      refreshtoken = getRefreshToken();
+      console.log("timeout refresh token", refreshtoken);
+      console.log("timeou old token", token);
+      axios.post('https://2689-103-141-51-42.in.ngrok.io/api/v1/login',
+        {
+          refreshtoken: refreshtoken,
+        }
+      ).then((response) => {
+        // const { token } = response.data.accesstoken;
+        sessionStorage.setItem('token', response.data.accesstoken);
+        sessionStorage.setItem('refreshtoken', response.data.refreshtoken);
+        sessionStorage.setItem('date1', new Date());
+        console.log("newToken", response.data.accesstoken)
+
+      }).catch((err) => {
+        console.log("eror", err)
+        navigate('/');
+      })
+
+    }
+  }
+  useEffect(() => {
+    setInterval(() => {
+    validateExpiry();
+    },5000)
+    // alert(token)
+    dataload();
+    // eslint-disable-next-line
+  }, [])
+  const dataload = () => {
+
+    token = getToken();
+    console.log("get new token student", token)
+    axios
+      .post('https://2689-103-141-51-42.in.ngrok.io/api/v1/studentProfile', params,
         {
           headers:
           {
@@ -34,24 +80,18 @@ function Profile() {
           setValue(response.data.data[0]);
 
         })
-  };
-
-
-
-  const navigate = useNavigate();
-  const logoutbtn = () => {
-    removeUserSession()
-    navigate('/')
   }
+
+
   return (
     <>
 
-      <div class="container-fluid bg-dark " >
+      <div className="container-fluid bg-dark " >
 
-        <div class="row">
-          <div class="col-sm-4"></div>
-          <div class="col-sm-6"><h1>Students Profile</h1></div>
-          <div class="col-sm-2 text-end"><button className='btn btn-danger mt-2 align-items-end' onClick={logoutbtn}>Logout</button></div>
+        <div className="row">
+          <div className="col-sm-4"></div>
+          <div className="col-sm-6 text-white"><h1>Students Profile</h1></div>
+          <div className="col-sm-2 text-end"><button className='btn btn-danger mt-2 align-items-end' onClick={logoutbtn}>Logout</button></div>
         </div>
       </div>
       <Row>
@@ -187,48 +227,11 @@ function Profile() {
           </div>
         </Col>
       </Row>
+
+      <SessionExpired />
+
     </>
   )
 }
-//   <>
-//    <section className='w-100'>
-//     <div class="container-fluid bg-dark " >
-
-//         <div class="row">
-//           <div class="col-sm-3"></div>
-//         <div class="col-sm-6"><h1>Profile Page</h1></div>
-//         <div class="col-sm-3 text-end"><button className='btn btn-danger mt-2 align-items-end' onClick={logoutbtn}>Logout</button></div>
-//      </div>
-
-//     <SessionExpired />
-//   </div>
-//   <div class="row container-fluid">
-//     <div class="col-sm-4"></div>
-//     <div class="col-sm-4">
-//   <div class="about-section">
-//   <h4>About Us Page</h4>
-//   <p>Some text about who we are and what we do.</p>
-//   <p>Resize the browser window to see that this page is responsive by the way.</p>
-// </div>
-
-// <h2 style={{textAlign:"center"}}>Our Team</h2>
-
-//     <div class="card">
-//    <img src={card_img} alt='hi' class="w-100" />
-//       <div class="container">
-//         <h2>Jane Doe</h2>
-//         <p class="title">CEO & Founder</p>
-//         <p>Some text that describes me lorem ipsum ipsum lorem.</p>
-//         <p>jane@example.com</p>
-//         <p><button class="button btn btn-success">Contact</button></p>
-//       </div>
-//     </div>
-//   </div>
-//   </div>
-
-//   </section> 
-//   </>
-
-// }
 
 export default Profile
